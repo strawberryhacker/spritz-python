@@ -1,7 +1,0 @@
-setup.py
-spritz/__init__.py
-spritz.egg-info/PKG-INFO
-spritz.egg-info/SOURCES.txt
-spritz.egg-info/dependency_links.txt
-spritz.egg-info/not-zip-safe
-spritz.egg-info/top_level.txt
