@@ -1,3 +1,3 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
-setup(name = 'spritz-cipher', version = '0.0', description = 'spritz cipher implementation', packages = find_packages(), zip_safe = False)
+setup(name = 'spritz', version = '0.0', description = 'spritz cipher implementation', packages = ['spritz'], zip_safe = False)
