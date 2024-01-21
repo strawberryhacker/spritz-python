@@ -1,4 +1,4 @@
-class Spritz:
+class Context:
   def __init__ (self):
     self.init()
 
