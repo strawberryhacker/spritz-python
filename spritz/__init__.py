@@ -75,13 +75,17 @@ class Spritz:
     if self.a:
       self.shuffle()
     
-    self.xor(data, 0, len(data))
+    return self.xor(data)
 
   def xor (self, data, start, stop):
-    for i in range(start, stop):
-      data[i] ^= self.drip()
+    result = bytearray()
 
-  def aead (self, nonce, key, data, header_size, mac_len):
+    for i in range(start, stop):
+      result.append(data[i] ^ self.drip())
+      
+    return result
+
+  def aead (self, nonce, key, header, data, mac_len):
     self.init()
 
     self.absorb_bytes(key)
@@ -90,28 +94,31 @@ class Spritz:
     self.absorb_bytes(nonce)
     self.absorb_stop()
 
-    self.absorb_bytes(data[:header_size])
+    self.absorb_bytes(header)
     self.absorb_stop()
 
     data_size = len(data)
     block_size = self.N // 4
     block_count = data_size // block_size
     remaining_bytes = data_size % block_size
-    start = header_size
+    start = 0
+
+    result = bytearray()
+    result.extend(header)
 
     for i in range(0, block_count):
       stop = start + block_size
-      self.xor(data, start, stop)
+      result.extend(self.xor(data[start:stop]))
       self.absorb_bytes(data[start:stop])
       start += block_size
 
     if remaining_bytes:
       stop = start + remaining_bytes
-      self.xor(data, start, stop)
+      result.extend(self.xor(data[start:stop]))
       self.absorb_bytes(data[start:stop])
     
     self.absorb_stop()
     self.absorb(mac_len)
     
     mac = bytearray([self.drip() for i in range(mac_len)])
-    return mac
+    return mac, result
