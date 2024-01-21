@@ -1,5 +1,8 @@
-class Context:
+class Spritz:
   def __init__ (self):
+    self.init()
+
+  def init (self):
     self.N = 256
     self.i = 0
     self.j = 0
@@ -8,17 +11,6 @@ class Context:
     self.a = 0
     self.w = 1
     self.s = [i for i in range(self.N)]
-
-  def init (self):
-    for i in range(self.N):
-      self.s[i] = i
-
-    self.i = 0
-    self.j = 0
-    self.k = 0
-    self.z = 0
-    self.a = 0
-    self.w = 1
 
   def swap (self, i, j):
     a = self.s[i]
@@ -38,7 +30,7 @@ class Context:
     if self.a == self.N // 2:
       self.shuffle()
     self.swap(self.a, (nibble + self.N // 2) & 0xFF)
-    self.a += 1
+    self.a = (self.a + 1) & 0xff
 
   def absorb (self, byte):
     self.absorb_nibble(byte & 0xF)
@@ -76,14 +68,47 @@ class Context:
     self.z = tmp
     return tmp
 
-  def crypt_init (self, key):
+  def crypt (self, data, key):
     self.init()
     self.absorb_bytes(key)
+
     if self.a:
       self.shuffle()
 
-  def crypt (self, data):
-    encrypted_data = bytearray()
-    for byte in data:
-      encrypted_data.append(byte ^ self.drip())
-    return encrypted_data
+    for i in range(len(data)):
+      data[i] ^= self.drip()
+
+  def aead (self, nonce, key, header, data, mac_len):
+    self.init()
+
+    self.absorb_bytes(key)
+    self.absorb_stop()
+
+    self.absorb_bytes(nonce)
+    self.absorb_stop()
+
+    self.absorb_bytes(header)
+    self.absorb_stop()
+
+    data_size = len(data)
+    block_size = self.N // 4
+    block_count = data_size // block_size
+    remaining_bytes = data_size % block_size
+    start = 0
+
+    for i in range(0, block_count):
+      stop = start + block_size
+      data[start:stop] = self.crypt(data[start:stop])
+      self.absorb_bytes(data[start:stop])
+      start += block_size
+
+    if remaining_bytes:
+      stop = start + remaining_bytes
+      data[start:stop] = self.crypt(data[start:stop])
+      self.absorb_bytes(data[start:stop])
+    
+    self.absorb_stop()
+    self.absorb(mac_len)
+    
+    mac = bytearray([self.drip() for i in range(mac_len)])
+    return mac
