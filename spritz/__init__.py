@@ -77,11 +77,11 @@ class Spritz:
     
     return self.xor(data)
 
-  def xor (self, data, start, stop):
+  def xor (self, data):
     result = bytearray()
 
-    for i in range(start, stop):
-      result.append(data[i] ^ self.drip())
+    for i in data:
+      result.append(i ^ self.drip())
       
     return result
 
