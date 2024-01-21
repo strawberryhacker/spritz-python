@@ -85,7 +85,7 @@ class Spritz:
       
     return result
 
-  def aead (self, nonce, key, header, data, mac_len):
+  def aead (self, nonce, key, header, plaintext, mac_len):
     self.init()
 
     self.absorb_bytes(key)
@@ -97,28 +97,27 @@ class Spritz:
     self.absorb_bytes(header)
     self.absorb_stop()
 
-    data_size = len(data)
+    data_size = len(plaintext)
     block_size = self.N // 4
     block_count = data_size // block_size
     remaining_bytes = data_size % block_size
     start = 0
 
-    result = bytearray()
-    result.extend(header)
+    ciphertext = bytearray()
 
     for i in range(0, block_count):
-      stop = start + block_size
-      result.extend(self.xor(data[start:stop]))
-      self.absorb_bytes(data[start:stop])
+      slice = plaintext[start:start + block_size]
+      ciphertext.extend(self.xor(slice))
+      self.absorb_bytes(slice)
       start += block_size
 
     if remaining_bytes:
-      stop = start + remaining_bytes
-      result.extend(self.xor(data[start:stop]))
-      self.absorb_bytes(data[start:stop])
+      slice = plaintext[start:start + remaining_bytes]
+      ciphertext.extend(self.xor(slice))
+      self.absorb_bytes(slice)
     
     self.absorb_stop()
     self.absorb(mac_len)
     
     mac = bytearray([self.drip() for i in range(mac_len)])
-    return mac, result
+    return mac, ciphertext
