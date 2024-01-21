@@ -1,4 +1,4 @@
-class Context:
+class Spritz:
   def __init__ (self):
     self.init()
 
@@ -74,8 +74,11 @@ class Context:
 
     if self.a:
       self.shuffle()
+    
+    self.xor(data, 0, len(data))
 
-    for i in range(len(data)):
+  def xor (self, data, start, stop):
+    for i in range(start, stop):
       data[i] ^= self.drip()
 
   def aead (self, nonce, key, header, data, mac_len):
@@ -98,13 +101,13 @@ class Context:
 
     for i in range(0, block_count):
       stop = start + block_size
-      data[start:stop] = self.crypt(data[start:stop])
+      self.xor(data, start, stop)
       self.absorb_bytes(data[start:stop])
       start += block_size
 
     if remaining_bytes:
       stop = start + remaining_bytes
-      data[start:stop] = self.crypt(data[start:stop])
+      self.xor(data, start, stop)
       self.absorb_bytes(data[start:stop])
     
     self.absorb_stop()
