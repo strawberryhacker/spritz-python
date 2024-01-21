@@ -81,7 +81,7 @@ class Spritz:
     for i in range(start, stop):
       data[i] ^= self.drip()
 
-  def aead (self, nonce, key, header, data, mac_len):
+  def aead (self, nonce, key, data, header_size, mac_len):
     self.init()
 
     self.absorb_bytes(key)
@@ -90,14 +90,14 @@ class Spritz:
     self.absorb_bytes(nonce)
     self.absorb_stop()
 
-    self.absorb_bytes(header)
+    self.absorb_bytes(data[:header_size])
     self.absorb_stop()
 
     data_size = len(data)
     block_size = self.N // 4
     block_count = data_size // block_size
     remaining_bytes = data_size % block_size
-    start = 0
+    start = header_size
 
     for i in range(0, block_count):
       stop = start + block_size
